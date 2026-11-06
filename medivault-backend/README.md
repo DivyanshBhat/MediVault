@@ -29,6 +29,12 @@ uvicorn app.main:app --reload
 
 Open the interactive API documentation at `http://127.0.0.1:8000/docs`.
 
+Run the starter tests:
+
+\`\`\`powershell
+pytest
+\`\`\`
+
 ## Current scope
 
 The initial application entry point exposes a health-check endpoint only. Database models, migrations, authentication, family authorization, and medical-record features will be implemented in their roadmap phases. Do not use this starter as a production service.

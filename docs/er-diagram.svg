@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1220" viewBox="0 0 1500 1220">
+<title>MediVault Entity Relationship Diagram</title>
+<desc>ER diagram showing nine MediVault tables, including refresh tokens and the composite family and patient foreign key.</desc>
+<style>
+.bg{fill:#f7f9fc}.card{fill:#fff;stroke:#b8c6d4;stroke-width:2}.head{fill:#17324d}.head2{fill:#245b72}.head3{fill:#8a4b24}
+.h{font:700 19px Arial;fill:#fff}.t{font:15px Arial;fill:#243447}.small{font:12px Arial;fill:#526579}.pk{font-weight:bold;fill:#17324d}.fk{font-weight:bold;fill:#245b72}
+.rel{fill:none;stroke:#526579;stroke-width:2;marker-end:url(#arr)}.special{fill:none;stroke:#a45a2a;stroke-width:3;marker-end:url(#arr2)}.dash{stroke-dasharray:8 6}
+</style>
+<defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#526579"/></marker><marker id="arr2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#a45a2a"/></marker></defs>
+<rect class="bg" width="1500" height="1220"/>
+<text x="750" y="42" text-anchor="middle" style="font:700 29px Arial;fill:#17324d">MediVault — Entity Relationship Diagram</text>
+<text x="750" y="68" text-anchor="middle" class="small">PostgreSQL • UUID primary keys • Family-based data isolation</text>
+<!-- Relationships behind tables -->
+<path class="rel" d="M370 155H500"/>
+<text x="435" y="143" text-anchor="middle" class="small">created_by</text>
+<path class="rel" d="M370 210H420V130H950"/>
+<text x="655" y="119" text-anchor="middle" class="small">user_id</text>
+<path class="rel" d="M820 145H950"/>
+<text x="885" y="133" text-anchor="middle" class="small">family_id</text>
+<path class="rel" d="M660 280V420"/>
+<text x="675" y="355" class="small">family_id</text>
+<path class="rel" d="M820 220H875V390H950"/>
+<text x="885" y="375" class="small">family_id</text>
+<path class="rel" d="M370 235H900V425H950"/>
+<text x="630" y="225" class="small">invited_by</text>
+<path class="rel" d="M820 520H950V770"/>
+<text x="835" y="505" class="small">patient_id</text>
+<path class="special dash" d="M820 550H890V805H950"/>
+<text x="845" y="670" class="small" fill="#8a4b24">family_id + patient_id</text>
+<path class="rel" d="M370 275H430V890H500"/>
+<text x="440" y="860" class="small">actor_user_id</text>
+<path class="rel" d="M660 680V820"/>
+<text x="675" y="755" class="small">family_id</text>
+<path class="rel" d="M370 180H410V930H500"/>
+<path class="rel" d="M210 350V420"/>
+<text x="225" y="390" class="small">user_id</text>
+<path class="rel" d="M820 170H850V890H950"/>
+<text x="860" y="875" class="small">family_id</text>
+<path class="rel" d="M370 500H420V1030H500"/>
+<text x="430" y="1015" class="small">user_id</text>
+<!-- users -->
+<g transform="translate(50 100)"><rect class="card" width="320" height="250" rx="9"/><path class="head" d="M9 0H311Q320 0 320 9V42H0V9Q0 0 9 0Z"/><text class="h" x="160" y="28" text-anchor="middle">users</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94">full_name : varchar(100)</text><text x="16" y="120">email : varchar(255) UNIQUE</text><text x="16" y="146">password_hash : varchar(255)</text><text x="16" y="172">is_active : boolean</text><text x="16" y="198">email_verified_at : timestamptz</text><text x="16" y="224">created_at / updated_at / deleted_at</text></g></g>
+<!-- families -->
+<g transform="translate(500 100)"><rect class="card" width="320" height="180" rx="9"/><path class="head" d="M9 0H311Q320 0 320 9V42H0V9Q0 0 9 0Z"/><text class="h" x="160" y="28" text-anchor="middle">families</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94">name : varchar(100)</text><text x="16" y="120"><tspan class="fk">FK</tspan>  created_by : uuid</text><text x="16" y="146">created_at / updated_at / deleted_at</text></g></g>
+<!-- memberships -->
+<g transform="translate(950 85)"><rect class="card" width="360" height="190" rx="9"/><path class="head2" d="M9 0H351Q360 0 360 9V42H0V9Q0 0 9 0Z"/><text class="h" x="180" y="28" text-anchor="middle">family_memberships</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94"><tspan class="fk">FK</tspan>  family_id : uuid</text><text x="16" y="120"><tspan class="fk">FK</tspan>  user_id : uuid</text><text x="16" y="146">role : varchar(20) • joined_at</text><text x="16" y="170" class="small">UNIQUE (family_id, user_id)</text></g></g>
+<!-- invitations -->
+<g transform="translate(950 320)"><rect class="card" width="360" height="230" rx="9"/><path class="head2" d="M9 0H351Q360 0 360 9V42H0V9Q0 0 9 0Z"/><text class="h" x="180" y="28" text-anchor="middle">family_invitations</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94"><tspan class="fk">FK</tspan>  family_id / invited_by</text><text x="16" y="120">email : varchar(255)</text><text x="16" y="146">role / status : varchar(20)</text><text x="16" y="172">token_hash : varchar(255) UNIQUE</text><text x="16" y="198">expires_at / accepted_at</text><text x="16" y="218">created_at</text></g></g>
+<!-- patients -->
+<g transform="translate(500 420)"><rect class="card" width="320" height="260" rx="9"/><path class="head2" d="M9 0H311Q320 0 320 9V42H0V9Q0 0 9 0Z"/><text class="h" x="160" y="28" text-anchor="middle">patients</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94"><tspan class="fk">FK</tspan>  family_id : uuid</text><text x="16" y="120">full_name : varchar(100)</text><text x="16" y="146">date_of_birth : date</text><text x="16" y="172">gender / blood_group</text><text x="16" y="198">relationship / notes</text><text x="16" y="224">created_at / updated_at / deleted_at</text><text x="16" y="248" class="small">UNIQUE (family_id, id)</text></g></g>
+<!-- records -->
+<g transform="translate(950 700)"><rect class="card" width="420" height="300" rx="9"/><path class="head3" d="M9 0H411Q420 0 420 9V42H0V9Q0 0 9 0Z"/><text class="h" x="210" y="28" text-anchor="middle">medical_records</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94"><tspan class="fk">FK</tspan>  (family_id, patient_id) → patients</text><text x="16" y="120"><tspan class="fk">FK</tspan>  uploaded_by : uuid → users</text><text x="16" y="146">title / description</text><text x="16" y="172">record_type / document_date</text><text x="16" y="198">storage_key : varchar(500)</text><text x="16" y="224">original_filename / mime_type</text><text x="16" y="250">file_size_bytes / checksum_sha256</text><text x="16" y="276">created_at / updated_at / deleted_at</text></g></g>
+<!-- subscriptions -->
+<g transform="translate(50 760)"><rect class="card" width="320" height="230" rx="9"/><path class="head2" d="M9 0H311Q320 0 320 9V42H0V9Q0 0 9 0Z"/><text class="h" x="160" y="28" text-anchor="middle">subscriptions</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94"><tspan class="fk">FK</tspan>  family_id : uuid UNIQUE</text><text x="16" y="120">plan / status : varchar(20)</text><text x="16" y="146">provider / provider_customer_id</text><text x="16" y="172">provider_subscription_id</text><text x="16" y="198">current_period_start / end</text><text x="16" y="220">created_at / updated_at</text></g></g>
+<!-- audit -->
+<g transform="translate(500 820)"><rect class="card" width="320" height="210" rx="9"/><path class="head2" d="M9 0H311Q320 0 320 9V42H0V9Q0 0 9 0Z"/><text class="h" x="160" y="28" text-anchor="middle">audit_logs</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94"><tspan class="fk">FK</tspan>  family_id / actor_user_id</text><text x="16" y="120">action / entity_type</text><text x="16" y="146">entity_id : uuid</text><text x="16" y="172">metadata : jsonb</text><text x="16" y="198">created_at : timestamptz</text></g></g>
+<!-- refresh -->
+<g transform="translate(50 420)"><rect class="card" width="320" height="240" rx="9"/><path class="head2" d="M9 0H311Q320 0 320 9V42H0V9Q0 0 9 0Z"/><text class="h" x="160" y="28" text-anchor="middle">refresh_tokens</text>
+<g class="t"><text x="16" y="68"><tspan class="pk">PK</tspan>  id : uuid</text><text x="16" y="94"><tspan class="fk">FK</tspan>  user_id : uuid</text><text x="16" y="120">token_hash : varchar(255) UNIQUE</text><text x="16" y="146">expires_at / created_at</text><text x="16" y="172">revoked_at</text><text x="16" y="198"><tspan class="fk">FK</tspan>  replaced_by_token_id</text><text x="16" y="222" class="small">Self-reference for token rotation</text></g></g>
+<text x="750" y="1155" text-anchor="middle" class="small">Orange relationship = composite foreign key enforcing that each medical record and patient belong to the same family.</text>
+<text x="750" y="1180" text-anchor="middle" class="small">Roles, statuses, file-size checks, owner-retention rules, and soft-delete behavior also require database/application constraints.</text>
+</svg>

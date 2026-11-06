@@ -2,28 +2,24 @@
 
 ## 1. Overview
 
-MediVault is a secure family medical-record management platform designed to help individuals and families store, organize, manage, and access medical information from a centralized application.
-The system allows users to maintain individual patient profiles, upload medical documents, organize medical histories, and securely share access with authorized family members.
-MediVault follows a **client-server architecture** with a separate frontend, backend, relational database, and cloud-based file storage.
-The application will initially follow a **modular monolith architecture**, keeping the backend as one deployable application with clearly separated modules.
+MediVault is a family medical-record management platform for organizing patient profiles and medical documents in one place. It uses a **client-server architecture** with a React frontend, a Python/FastAPI backend, PostgreSQL for structured data, and private object storage for uploaded documents.
 
-### Architectural Goals
+The backend will begin as a **modular monolith**: one deployable FastAPI application divided into modules with clear responsibilities. Redis, Celery, and additional infrastructure will be introduced only when the product needs them.
 
-- Security and privacy of medical information.
-- Separation of frontend and backend responsibilities.
-- Maintainable and modular code.
-- Reliable relational data management.
-- Scalable document storage.
-- Family-based access control.
-- Extensibility for future features.
+### Architectural goals
 
----
+- Protect sensitive personal and medical information.
+- Enforce family-level data isolation on every protected operation.
+- Keep frontend, backend, database, and file storage responsibilities separate.
+- Preserve relational integrity and maintainable code.
+- Build incrementally without prematurely introducing distributed services.
 
-# 2. Technology Stack
+## 2. Technology stack
 
-## 2.1 Frontend
+### 2.1 Frontend
 
-**Primary technologies: React + TypeScript + Vite**
+**React + TypeScript + Vite**
+
 | Technology | Responsibility |
 |---|---|
 | React | Component-based user interface |
@@ -34,424 +30,218 @@ The application will initially follow a **modular monolith architecture**, keepi
 | React Router | Client-side routing |
 | TanStack Query | Server-state management and API caching |
 | React Hook Form | Form management |
-| Zod | Frontend data validation |
-The frontend is responsible for:
+| Zod | Frontend form and data validation |
 
-- Rendering application pages and components.
-- User interactions and navigation.
-- Form handling and client-side validation.
-- Communicating with backend APIs.
-- Displaying patient profiles and medical records.
-- Managing loading, error, and success states.
-  The frontend must not be treated as a trusted security boundary. All important authorization and validation checks must also be performed by the backend.
+The frontend handles pages, navigation, forms, user interactions, and API communication. Frontend validation improves usability, but it is not a security boundary. The backend must repeat all security-relevant validation and authorization checks.
 
-## 2.2 Backend
+### 2.2 Backend
 
-**Primary technologies: Python + FastAPI**
+**Python + FastAPI**
+
 | Technology | Responsibility |
 |---|---|
 | Python | Backend programming language |
 | FastAPI | REST API framework |
 | Pydantic | Request and response validation |
 | SQLAlchemy 2 | Database ORM |
-| Alembic | Database migrations |
-| PyJWT | JWT handling |
-| pwdlib | Password hashing integration |
+| Alembic | Database schema migrations |
+| PyJWT | JWT encoding and verification |
+| pwdlib with Argon2 | Password hashing |
 | Pytest | Backend testing |
-The backend acts as the central application layer.
-Responsibilities include:
 
-- Authentication and authorization.
-- Business logic.
-- Request processing.
-- Input validation.
-- Database operations.
-- Medical-record management.
-- Family and patient management.
-- Secure file-upload authorization.
-- Subscription and plan enforcement.
-- Audit logging.
-  The backend will be organized into independent application modules while remaining part of a single deployable service.
+The backend is responsible for authentication, authorization, business rules, request validation, database operations, file-upload authorization, subscription enforcement, and audit logging.
 
-## 2.3 Database
+The application will remain one deployable service initially, with modules such as authentication, users, families, patients, medical records, storage, subscriptions, and audit.
 
-**Database: PostgreSQL**
-PostgreSQL stores structured application information.
-Primary data includes:
+### 2.3 Database
 
-- User accounts.
-- Families.
-- Family memberships.
-- Patient profiles.
-- Medical records.
-- Subscription information.
-- Audit logs.
-  SQLAlchemy will handle database interactions, while Alembic will manage schema migrations.
-  Relational integrity will be maintained using:
-- Primary keys.
-- Foreign keys.
-- Unique constraints.
-- Check constraints.
-- Database indexes.
-  UUID identifiers will be used for application entities from the initial implementation.
+**PostgreSQL**
 
-## 2.4 File Storage
+PostgreSQL stores structured application data, including users, families, memberships, invitations, patient profiles, medical-record metadata, subscriptions, and audit logs.
 
-**Storage: Amazon Web Services S3**
-AWS S3 will store uploaded medical documents separately from the relational database.
-Supported document types may include:
+- SQLAlchemy 2 manages database interactions.
+- Alembic manages schema changes through versioned migrations.
+- UUIDs are used as identifiers from the initial implementation.
+- Foreign keys, unique constraints, check constraints, and indexes enforce data integrity.
 
-- PDF medical reports.
-- Prescriptions.
-- Laboratory reports.
-- Medical images.
-- Other permitted healthcare documents.
-  PostgreSQL will store document metadata rather than the actual file contents.
-  Metadata includes:
-- Document ID.
-- Patient ID.
-- Original file name.
-- S3 object key.
-- MIME type.
-- File size.
-- Document category.
-- Upload timestamp.
-  Medical documents will be stored in private S3 buckets.
-  Access will be provided through short-lived, authorized pre-signed URLs.
+The full schema is documented in [database-design.md](database-design.md).
 
-## 2.5 Authentication and Security
+### 2.4 File storage
 
-Authentication will use a token-based approach.
-Planned technologies:
+**Private Amazon S3 bucket**
 
-- JWT access tokens.
-- Refresh-token rotation.
+Medical documents are stored in S3 rather than as binary data in PostgreSQL. The database stores metadata and the S3 object key.
+
+The bucket must remain private. The backend authorizes each upload or download and issues short-lived pre-signed URLs. A pre-signed URL is a temporary bearer credential, so it must not be logged or exposed unnecessarily.
+
+### 2.5 Authentication and security
+
+The planned authentication design includes:
+
 - Argon2 password hashing.
-- Secure HttpOnly cookies for refresh tokens.
-- Backend-enforced authorization policies.
-  The backend will verify the identity of the user and their permissions before allowing access to protected resources.
-  Family-level data isolation is a core security requirement.
+- Short-lived JWT access tokens.
+- Refresh-token rotation.
+- Refresh tokens stored securely and hashed at rest; session/refresh-token persistence must be included before refresh-token authentication is implemented.
+- HttpOnly, Secure, appropriately SameSite-configured cookies for browser refresh-token handling.
+- Backend-enforced family membership and role checks.
+- Rate limiting and audit logging for sensitive operations.
 
-## 2.6 Infrastructure and Supporting Technologies
+JWTs and UUIDs do not grant authorization by themselves. The backend must check the user's current permissions for the requested resource.
 
-| Technology     | Responsibility                 | Priority         |
-| -------------- | ------------------------------ | ---------------- |
-| Docker         | Containerization               | Initial setup    |
-| Redis          | Caching and task queue support | Later            |
-| Celery         | Background processing          | Later            |
-| Git            | Version control                | Initial setup    |
-| GitHub         | Repository hosting             | Initial setup    |
-| GitHub Actions | CI/CD automation               | Later            |
-| AWS            | Cloud infrastructure           | Deployment stage |
+### 2.6 Infrastructure
 
-Redis and Celery will be introduced when background processing or caching becomes necessary.
-They are not required for the initial application foundation.
+| Technology | Responsibility | Introduction |
+|---|---|---|
+| Git + GitHub | Version control and repository hosting | Initial |
+| Docker | Repeatable local and deployment environments | Initial foundation |
+| AWS | Cloud infrastructure and S3 storage | File-storage/deployment phase |
+| Redis | Caching or task-broker support | Later, if needed |
+| Celery | Background jobs | Later, if needed |
+| GitHub Actions | CI automation | After tests are established |
 
----
+Redis and Celery are not prerequisites for the first working backend.
 
-# 3. High-Level System Architecture
+## 3. High-level architecture
 
-                  USER
-                    |
-                    |
-            React + TypeScript
-                    |
-                    |
-                HTTP / HTTPS
-                    |
-                    |
-             Python + FastAPI
-                    |
-          -----------------------
-          |          |          |
-          |          |          |
-      PostgreSQL   AWS S3    Redis
-          |          |       (Later)
-          |          |
-      User Data   Medical Files
-      Families    Prescriptions
-      Patients    Reports
-      Records
-          |
-          |
-      Audit Logs
+```text
+                    USER
+                      |
+                      v
+             React + TypeScript
+                      |
+                 HTTPS / REST
+                      |
+                      v
+              Python + FastAPI
+                /     |      \
+               v      v       v
+          PostgreSQL  AWS S3  Redis
+          structured  private (later)
+             data     files
+```
 
-The frontend communicates with the backend through REST APIs.
-The backend handles application logic and communicates with PostgreSQL and AWS S3.
+The frontend communicates with FastAPI over HTTP/HTTPS. FastAPI applies authentication, authorization, validation, and business rules before accessing PostgreSQL or issuing S3 upload/download permissions.
 
----
+## 4. Authenticated request lifecycle
 
-# 4. Request Lifecycle
+A typical protected API request follows this sequence:
 
-A typical authenticated request follows this sequence:
-User
-|
-v
-React Frontend
-|
-v
-HTTP Request
-|
-v
-FastAPI Backend
-|
-v
-Authentication
-|
-v
-Authorization
-|
-v
-Request Validation
-|
-v
-Business Logic
-|
-v
-SQLAlchemy ORM
-|
-v
-PostgreSQL
-|
-v
-Response
-|
-v
-React Frontend
-Every protected backend operation must verify that the authenticated user is authorized to perform the requested action.
+1. The frontend sends the request with its access credential.
+2. FastAPI verifies the credential and identifies the user.
+3. The backend loads or verifies the user's relevant family membership and role.
+4. The request data is validated with Pydantic.
+5. The service layer applies business rules.
+6. SQLAlchemy performs the required database operations.
+7. The backend returns only data the user is authorized to receive.
 
----
+Authorization must be enforced on the server for every protected resource. Do not rely on hidden frontend controls or unpredictable identifiers.
 
-# 5. Medical Document Upload Architecture
+## 5. Medical document upload and access
 
-Medical documents will be uploaded directly from the frontend to AWS S3 using short-lived pre-signed URLs.
-This avoids routing large file contents through the application server.
+### Upload flow
 
-### Upload Flow
+1. A user selects a document in the frontend.
+2. The frontend requests an upload authorization from FastAPI.
+3. FastAPI authenticates the user and verifies access to the patient and family.
+4. The backend validates permitted file type, size, and metadata.
+5. FastAPI creates a short-lived pre-signed upload URL for a server-generated object key.
+6. The frontend uploads the file directly to the private S3 bucket.
+7. The backend verifies the uploaded object and persists its metadata in PostgreSQL.
 
-User selects document
-|
-v
-React Frontend
-|
-v
-FastAPI Backend
-|
-v
-Authenticate user
-|
-v
-Verify patient access
-|
-v
-Validate upload request
-|
-v
-Generate pre-signed URL
-|
-v
-Frontend receives upload URL
-|
-v
-Upload directly to AWS S3
-|
-v
-Backend verifies uploaded object
-|
-v
-Save document metadata
-|
-v
-PostgreSQL
+The implementation must account for failed uploads and orphaned objects so incomplete uploads do not create misleading medical-record entries.
 
-### Document Access Flow
+### Download flow
 
-User requests document
-|
-v
-FastAPI Backend
-|
-v
-Authenticate user
-|
-v
-Verify family and patient permissions
-|
-v
-Generate short-lived access URL
-|
-v
-Frontend accesses document
-The S3 bucket must remain private. Public object access will not be permitted.
+1. The user requests a medical document.
+2. FastAPI authenticates the user.
+3. The backend verifies family membership and permission to access the patient and record.
+4. FastAPI issues a short-lived pre-signed download URL.
+5. The frontend uses that URL to retrieve the private object.
 
----
+Public S3 object access is not permitted.
 
-# 6. Database Architecture
+## 6. Core data model
 
-The application will use a relational database model.
-The initial core entities are:
 | Entity | Responsibility |
 |---|---|
-| Users | User accounts and authentication |
-| Families | Family-level accounts |
-| FamilyMemberships | User-family relationships and roles |
-| Patients | Individual medical profiles |
-| MedicalRecords | Medical document metadata |
-| Subscriptions | Free and premium plan information |
-| AuditLogs | Security and activity history |
-Additional entities may be introduced as the application evolves.
-The complete schema and relationships will be documented separately in `database-design.md`.
+| Users | Login accounts and profile information |
+| Families | Family workspaces and tenant boundary |
+| Family Memberships | User-family relationship and role |
+| Family Invitations | Pending and historical invitations |
+| Patients | Patient profiles owned by a family |
+| Medical Records | Document metadata linked to a patient and family |
+| Subscriptions | Family-level plan and billing references |
+| Audit Logs | Append-only security and activity history |
 
----
+A user may belong to multiple families. Each family may have multiple members and patient profiles. The detailed columns, constraints, and relationships are in [database-design.md](database-design.md).
 
-# 7. Backend Module Architecture
+## 7. Backend module layout
 
-The backend will follow a modular structure.
-Initial modules:
+The backend will be organized by responsibility. A starting structure is:
 
-- **Authentication:** Registration, login, refresh tokens and logout.
-- **Users:** User profiles and account management.
-- **Families:** Family creation and membership management.
-- **Patients:** Patient profiles and associated information.
-- **Medical Records:** Document metadata and record management.
-- **Storage:** AWS S3 integration and upload authorization.
-- **Subscriptions:** Plan management and usage limits.
-- **Audit:** Logging important security-sensitive actions.
-  Modules will communicate through defined service interfaces rather than relying on tightly coupled code.
+```text
+medivault-backend/
+├── app/
+│   ├── api/
+│   ├── core/
+│   ├── db/
+│   ├── models/
+│   ├── schemas/
+│   ├── services/
+│   ├── repositories/
+│   ├── modules/
+│   └── main.py
+├── migrations/
+├── tests/
+└── pyproject.toml
+```
 
----
+The exact layout can be adjusted during project initialization. Avoid adding empty abstractions before there is a clear use for them.
 
-# 8. Security Architecture
-
-Security is a fundamental requirement because MediVault handles sensitive medical information.
-Planned security measures include:
+## 8. Security requirements
 
 ### Authentication
 
-- Secure password hashing.
-- Short-lived access tokens.
-- Refresh-token rotation.
-- Protected authentication endpoints.
+- Hash passwords with Argon2; never store plaintext passwords.
+- Use short-lived access tokens.
+- Rotate refresh tokens and detect reuse.
+- Store refresh-token/session secrets hashed at rest.
+- Protect refresh-token cookies with HttpOnly, Secure, and appropriate SameSite settings.
 
-### Authorization
+### Authorization and tenant isolation
 
-- Family-level data isolation.
-- Role-based access control.
-- Patient-level permission checks.
-- Backend-enforced resource ownership checks.
+- Verify family membership and role on every protected family resource.
+- Check that the patient and medical record belong to the same family.
+- Do not treat a UUID as proof of access.
+- Apply least-privilege rules to owners, administrators, and members.
 
-### File Security
+### File security
 
-- Private S3 buckets.
-- Short-lived pre-signed URLs.
-- File type and size validation.
-- Randomized storage object keys.
-- No public document URLs.
+- Keep S3 buckets private.
+- Use short-lived pre-signed URLs.
+- Generate storage keys on the server; do not trust client-supplied paths.
+- Validate file size and content type, and consider content inspection before production.
+- Avoid logging pre-signed URLs or document contents.
 
-### Database Security
+### Database and application security
 
-- Parameterized database operations through the ORM.
-- Restricted database credentials.
-- Foreign key constraints.
-- Automated backups.
+- Use parameterized ORM/database operations.
+- Keep credentials and secrets outside source control.
+- Restrict database and cloud permissions.
+- Apply rate limits to sensitive endpoints.
+- Keep audit logs free of passwords, tokens, and unnecessary medical details.
+- Plan backups, restoration tests, and data-retention procedures.
 
-### Application Security
+## 9. Development principles
 
-- HTTPS communication.
-- Secure secret management.
-- Rate limiting.
-- Audit logging.
-- Input validation.
-  Security controls will be tested throughout development.
+1. Keep a modular monolith until there is a demonstrated need to split services.
+2. Make the backend the authority for access control.
+3. Enforce data integrity in PostgreSQL as well as application code.
+4. Use Alembic migrations for schema changes.
+5. Add automated tests alongside features.
+6. Introduce infrastructure only when it solves a current requirement.
+7. Keep this document aligned with implemented decisions.
 
----
+## 10. Future enhancements
 
-# 9. Project Structure
-
-MediVault/
-|
-|-- docs/
-| |-- architecture.md
-| |-- database-design.md
-| |-- er-diagram.png
-| |-- roadmap.md
-|
-|-- medivault-frontend/
-| |-- public/
-| |-- src/
-| | |-- assets/
-| | |-- components/
-| | |-- pages/
-| | |-- layouts/
-| | |-- hooks/
-| | |-- services/
-| | |-- context/
-| | |-- types/
-| | |-- utils/
-| |
-| |-- package.json
-| |-- tsconfig.json
-|
-|-- medivault-backend/
-| |-- app/
-| | |-- api/
-| | |-- core/
-| | |-- models/
-| | |-- schemas/
-| | |-- services/
-| | |-- repositories/
-| | |-- middleware/
-| | |-- main.py
-| |
-| |-- migrations/
-| |-- tests/
-| |-- requirements.txt
-|
-|-- .gitignore
-|-- README.md
-|-- LICENSE
-|-- MediVault.code-workspace
-This structure may evolve as the application grows.
-
----
-
-# 10. Design Principles
-
-MediVault follows these architectural principles:
-
-1. Separation of concerns.
-2. Modular monolith architecture.
-3. Secure-by-design development.
-4. Relational data integrity.
-5. Least-privilege access control.
-6. Maintainability and readability.
-7. Incremental development.
-8. Automated testing.
-9. Independent frontend and backend development.
-10. Scalable cloud-based document storage.
-
----
-
-# 11. Planned Future Enhancements
-
-Potential future improvements include:
-
-- OCR-based medical document extraction.
-- AI-assisted document categorization.
-- Medical history summaries.
-- Medication reminders.
-- Appointment management.
-- Doctor and hospital portals.
-- Advanced family-sharing permissions.
-- Mobile application.
-- Advanced search across medical records.
-  These features will be evaluated after the core platform is implemented.
-
----
-
-# 12. Conclusion
-
-MediVault is designed as a secure and modular family medical-record management platform.
-By combining React and TypeScript for the frontend, Python and FastAPI for the backend, PostgreSQL for structured data, and AWS S3 for document storage, the architecture aims to provide a maintainable foundation for future development.
-The initial implementation will prioritize authentication, family management, patient profiles, medical-record management, and security.
-The architecture will evolve incrementally as new requirements are introduced.
+Potential later features include OCR, document search, medical-history summaries, reminders, appointment management, expanded sharing permissions, portals, and a mobile application. They are outside the initial implementation scope.

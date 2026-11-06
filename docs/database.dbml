@@ -36,6 +36,10 @@ Table family_memberships {
     (family_id, user_id) [unique]
     (user_id)
   }
+
+  checks {
+    `role in ('OWNER', 'ADMIN', 'MEMBER')` [name: 'chk_family_membership_role']
+  }
 }
 
 Table family_invitations {
@@ -52,6 +56,11 @@ Table family_invitations {
 
   indexes {
     (family_id, status)
+  }
+
+  checks {
+    `role in ('ADMIN', 'MEMBER')` [name: 'chk_invitation_role']
+    `status in ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED')` [name: 'chk_invitation_status']
   }
 }
 
@@ -97,6 +106,11 @@ Table medical_records {
     (family_id)
     (uploaded_by)
   }
+
+  checks {
+    `record_type in ('PRESCRIPTION', 'LAB_REPORT', 'SCAN', 'DISCHARGE_SUMMARY', 'VACCINATION', 'OTHER')` [name: 'chk_medical_record_type']
+    `file_size_bytes > 0` [name: 'chk_medical_record_file_size']
+  }
 }
 
 Table subscriptions {
@@ -111,6 +125,11 @@ Table subscriptions {
   current_period_end timestamptz
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
+
+  checks {
+    `plan in ('FREE', 'PREMIUM')` [name: 'chk_subscription_plan']
+    `status in ('ACTIVE', 'TRIALING', 'PAST_DUE', 'CANCELLED', 'EXPIRED')` [name: 'chk_subscription_status']
+  }
 }
 
 Table audit_logs {

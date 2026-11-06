@@ -23,6 +23,9 @@ The goal is to build a working full-stack application while learning and applyin
 - [x] Git initialized and initial files committed.
 - [x] README and LICENSE added.
 - [x] `.gitignore` configured.
+- [x] Define the Python backend project configuration and dependency groups.
+- [x] Add the initial FastAPI application entry point and health-check endpoint.
+- [x] Add backend setup instructions and test-directory placeholder.
 - [ ] Confirm local Python version and virtual-environment workflow.
 - [ ] Confirm PostgreSQL installation and local connection.
 - [ ] Set up frontend tooling when frontend work begins.
@@ -66,8 +69,10 @@ The goal is to build a working full-stack application while learning and applyin
 
 ## Phase 3 — Python and FastAPI backend foundation
 
+The repository currently contains only a minimal FastAPI starter and health-check endpoint. The remaining tasks below are still pending.
+
 - [ ] Create a Python virtual environment.
-- [ ] Initialize the FastAPI application.
+- [x] Create the initial FastAPI application entry point (health check only).
 - [ ] Add configuration and environment-variable handling.
 - [ ] Connect FastAPI to PostgreSQL using SQLAlchemy 2.
 - [ ] Configure Alembic migrations.

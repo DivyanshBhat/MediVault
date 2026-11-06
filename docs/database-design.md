@@ -402,3 +402,62 @@ This structure supports:
 - Auditable access and activity.
 - Secure private document storage.
   The design provides a foundation for MediVault 2.0 while leaving room for future features.
+
+
+---
+
+## 12. Cross-family integrity constraints
+
+Application authorization is essential, but the database should also prevent a medical record from referencing a patient owned by a different family.
+
+To enforce this relationship:
+
+1. Keep `patients.id` as the primary key.
+2. Add a composite unique constraint on `patients(family_id, id)`.
+3. In `medical_records`, use a composite foreign key from `(family_id, patient_id)` to `patients(family_id, id)`.
+
+Conceptually, the relevant constraints are:
+
+```sql
+ALTER TABLE patients
+ADD CONSTRAINT uq_patients_family_id_id
+UNIQUE (family_id, id);
+
+ALTER TABLE medical_records
+ADD CONSTRAINT fk_medical_records_family_patient
+FOREIGN KEY (family_id, patient_id)
+REFERENCES patients (family_id, id);
+```
+
+The composite foreign key makes it impossible to attach a patient from Family A to a medical record that claims to belong to Family B. The ORM relationships and Alembic migration must reflect this constraint. Do not rely only on a service-layer check.
+
+The backend must still verify the requesting user's family membership and role. Database integrity does not replace authorization.
+
+## 13. Authentication session persistence
+
+Refresh-token rotation requires server-side session state. Before implementing refresh-token authentication, add a dedicated session or refresh-token table through an Alembic migration.
+
+A possible initial design is:
+
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| user_id | UUID | FK → users.id, NOT NULL |
+| token_hash | VARCHAR(255) | UNIQUE, NOT NULL |
+| expires_at | TIMESTAMPTZ | NOT NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| revoked_at | TIMESTAMPTZ | NULL |
+| replaced_by_token_id | UUID | NULL, FK → refresh_tokens.id |
+
+Store only a hash of the refresh-token secret, never the raw token. The backend should rotate tokens, revoke the previous token, detect reuse, and revoke the affected token family/session according to the chosen security policy.
+
+This table is an implementation prerequisite for refresh-token rotation, even though it is introduced in the authentication phase rather than required for the first database-learning exercises. Its final name and columns can be refined before the authentication migration is created.
+
+## 14. Constraint implementation notes
+
+- Add database CHECK constraints for finite role, invitation-status, subscription-plan, subscription-status, and medical-record-type values, or use PostgreSQL enum types after considering migration implications.
+- Add a unique constraint on `family_invitations.token_hash`.
+- Use a transaction when creating a family and its initial OWNER membership so the application cannot leave a newly created family without its owner.
+- Enforce that a family retains at least one active owner through transactional application logic or a carefully designed database mechanism; a simple row-level CHECK constraint cannot enforce this across membership rows.
+- Ensure queries that list active patients and enforce the free-plan limit consistently exclude soft-deleted patients.
+- Confirm delete behavior for each foreign key before creating migrations. Avoid cascading deletion of audit history or medical documents without an explicit retention policy.

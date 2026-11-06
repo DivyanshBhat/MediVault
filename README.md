@@ -95,7 +95,7 @@ The application follows a client-server architecture with a modular monolith bac
 
 The backend is the security boundary. Frontend checks improve usability but never replace backend authorization.
 
-For more detail, see [System Architecture](docs/architecture.md) and [Database Design](docs/database-design.md).
+For more detail, see [System Architecture](docs/architecture.md), [Database Design](docs/database-design.md), the [ER diagram](docs/er-diagram.svg), and its editable [DBML source](docs/database.dbml).
 
 ---
 
@@ -106,7 +106,8 @@ MediVault/
 ├── docs/
 │   ├── architecture.md
 │   ├── database-design.md
-│   ├── er-diagram.png
+│   ├── er-diagram.svg
+│   ├── database.dbml
 │   └── roadmap.md
 ├── medivault-backend/
 ├── medivault-frontend/

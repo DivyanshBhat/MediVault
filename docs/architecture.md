@@ -172,6 +172,7 @@ Public S3 object access is not permitted.
 | Medical Records | Document metadata linked to a patient and family |
 | Subscriptions | Family-level plan and billing references |
 | Audit Logs | Append-only security and activity history |
+| Refresh Tokens | Hashed refresh-token/session persistence and rotation tracking |
 
 A user may belong to multiple families. Each family may have multiple members and patient profiles. The detailed columns, constraints, and relationships are in [database-design.md](database-design.md).
 

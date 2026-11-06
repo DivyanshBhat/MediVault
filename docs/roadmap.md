@@ -76,9 +76,9 @@ The repository currently contains only a minimal FastAPI starter and health-chec
 - [ ] Add configuration and environment-variable handling.
 - [ ] Connect FastAPI to PostgreSQL using SQLAlchemy 2.
 - [ ] Configure Alembic migrations.
-- [ ] Add a health-check endpoint.
+- [x] Add a starter health-check endpoint.
 - [ ] Establish a consistent API response and error-handling approach.
-- [ ] Add Pytest and an initial test structure.
+- [x] Add Pytest, an initial test structure, and a health-check test.
 - [ ] Organize the backend into modules without unnecessary abstractions.
 
 ## Phase 4 — Authentication and authorization

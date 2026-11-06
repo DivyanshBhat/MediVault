@@ -110,14 +110,20 @@ MediVault/
 │   ├── database.dbml
 │   └── roadmap.md
 ├── medivault-backend/
+│   ├── app/
+│   │   └── main.py
+│   ├── tests/
+│   ├── pyproject.toml
+│   └── README.md
 ├── medivault-frontend/
+├── .env.example
 ├── .gitignore
 ├── LICENSE
 ├── MediVault.code-workspace
 └── README.md
 ```
 
-The frontend and backend directories are separate applications within the same repository. Their internal structures will be created during their respective setup phases.
+The frontend and backend directories are separate applications within the same repository. The backend currently contains a minimal FastAPI entry point and health-check endpoint; its database, authentication, and product modules will be added in the relevant roadmap phases.
 
 ---
 
@@ -195,6 +201,7 @@ The project will be developed incrementally:
 - **Project:** MediVault
 - **Version:** 2.0 (architecture rebuild)
 - **Category:** Full-stack web application
+- **License:** MIT (see [LICENSE](LICENSE))
 - **Repository:** [GitHub — MediVault](https://github.com/DivyanshBhat/MediVault)
 
 ---

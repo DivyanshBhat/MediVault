@@ -37,8 +37,9 @@ The goal is to build a working full-stack application while learning and applyin
 - [x] Identify core entities and relationships.
 - [x] Plan UUID identifiers and soft deletion.
 - [x] Document family-level membership and access control.
-- [ ] Finalize the ER diagram against the latest schema constraints.
-- [ ] Review composite family/patient integrity constraints before generating migrations.
+- [x] Create the ER diagram and keep its editable DBML source in the repository.
+- [x] Document the composite family/patient integrity constraint in the schema and diagram.
+- [ ] Validate the DBML in dbdiagram.io and export/verify the final diagram rendering.
 
 ## Phase 2 — SQL and PostgreSQL fundamentals (next)
 

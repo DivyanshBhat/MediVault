@@ -1,188 +1,190 @@
 # MediVault Development Roadmap
 
-## Project Vision
+## Project vision
 
-MediVault is a secure family medical records management platform.
-
-**Tagline:**
+MediVault is a secure family medical-record management platform.
 
 > Your family's complete medical history. One tap away.
 
-The objective is to build a production-inspired full-stack application while following real-world software engineering practices.
+The goal is to build a working full-stack application while learning and applying sound software-engineering practices. This roadmap distinguishes completed planning from features that have not yet been implemented.
+
+## Project status
+
+- Repository and initial documentation exist.
+- The React + TypeScript frontend and Python + FastAPI backend are the selected architecture.
+- PostgreSQL schema design is documented.
+- Backend and frontend implementation have not yet been marked complete.
 
 ---
 
-# Project Progress
+## Phase 0 — Repository and development environment
 
-## Phase 0 — Project Setup ✅
+- [x] GitHub repository created.
+- [x] Git initialized and initial files committed.
+- [x] README and LICENSE added.
+- [x] `.gitignore` configured.
+- [ ] Confirm local Python version and virtual-environment workflow.
+- [ ] Confirm PostgreSQL installation and local connection.
+- [ ] Set up frontend tooling when frontend work begins.
+- [ ] Add environment-variable examples without committing secrets.
 
-### Development Environment
+## Phase 1 — Architecture and database design
 
-- [x] VS Code configured
-- [x] Node.js installed
-- [x] npm verified
-- [x] Git installed
-- [x] PostgreSQL installed
+- [x] Define the application purpose and core capabilities.
+- [x] Select React + TypeScript + Vite for the frontend.
+- [x] Select Python + FastAPI for the backend.
+- [x] Select PostgreSQL, SQLAlchemy 2, and Alembic.
+- [x] Identify core entities and relationships.
+- [x] Plan UUID identifiers and soft deletion.
+- [x] Document family-level membership and access control.
+- [ ] Finalize the ER diagram against the latest schema constraints.
+- [ ] Review composite family/patient integrity constraints before generating migrations.
 
-### Project Initialization
+## Phase 2 — SQL and PostgreSQL fundamentals (next)
 
-- [x] GitHub repository created
-- [x] Git initialized
-- [x] README created
-- [x] LICENSE added
-- [x] .gitignore configured
-- [x] Initial commit pushed
+### Learn
 
----
+- [ ] Relational database concepts and PostgreSQL basics.
+- [ ] SQL data types, including UUID, VARCHAR, DATE, TIMESTAMPTZ, BOOLEAN, BIGINT, and JSONB.
+- [ ] CREATE DATABASE and CREATE TABLE.
+- [ ] Primary keys and foreign keys.
+- [ ] NOT NULL, UNIQUE, CHECK, and DEFAULT constraints.
+- [ ] INSERT, SELECT, UPDATE, and DELETE.
+- [ ] WHERE, ORDER BY, LIMIT, and pagination basics.
+- [ ] JOIN operations.
+- [ ] GROUP BY and aggregate functions.
+- [ ] Index fundamentals and query plans.
+- [ ] Transactions and isolation basics.
 
-## Phase 1 — Database Design & Architecture ✅
+### Apply to MediVault
 
-### Database Fundamentals
+- [ ] Create the local `medivault` database.
+- [ ] Create the initial schema in a development database.
+- [ ] Insert and query sample, non-sensitive test data.
+- [ ] Verify constraints and relationships.
 
-- [x] What is a database?
-- [x] Tables
-- [x] Rows
-- [x] Columns
-- [x] Primary Keys
-- [x] Foreign Keys
-- [x] One-to-One Relationships
-- [x] One-to-Many Relationships
-- [x] Many-to-Many Relationships
+## Phase 3 — Python and FastAPI backend foundation
 
-### Database Design
+- [ ] Create a Python virtual environment.
+- [ ] Initialize the FastAPI application.
+- [ ] Add configuration and environment-variable handling.
+- [ ] Connect FastAPI to PostgreSQL using SQLAlchemy 2.
+- [ ] Configure Alembic migrations.
+- [ ] Add a health-check endpoint.
+- [ ] Establish a consistent API response and error-handling approach.
+- [ ] Add Pytest and an initial test structure.
+- [ ] Organize the backend into modules without unnecessary abstractions.
 
-- [x] PostgreSQL vs MongoDB
-- [x] Database schema planning
-- [x] Entity identification
-- [x] Attribute selection
-- [x] Relationship design
-- [x] Normalization (up to 3NF)
-- [x] Constraints planning
-- [x] Soft delete strategy
+## Phase 4 — Authentication and authorization
 
-### Documentation
+- [ ] Implement registration and login.
+- [ ] Hash passwords using Argon2.
+- [ ] Implement short-lived access tokens.
+- [ ] Design and persist refresh-token/session records before implementing refresh-token rotation.
+- [ ] Store refresh-token secrets hashed at rest.
+- [ ] Implement refresh, rotation, logout, and token-reuse handling.
+- [ ] Configure secure HttpOnly cookies for browser refresh tokens.
+- [ ] Add authentication dependencies and protected endpoints.
+- [ ] Add rate limiting for sensitive authentication routes.
+- [ ] Test authentication failure and authorization boundaries.
 
-- [x] Database Design
-- [x] System Architecture
-- [x] Entity Relationship Diagram (ERD)
+## Phase 5 — Families, memberships, and patients
 
----
+- [ ] Create family workspaces.
+- [ ] Add the creator as the initial family owner.
+- [ ] Implement family membership and role checks.
+- [ ] Implement family invitations and invitation acceptance.
+- [ ] Create and update patient profiles.
+- [ ] Implement soft deletion and ordinary-query filtering.
+- [ ] Enforce the free-plan limit of three active patients per family.
+- [ ] Add transaction-safe checks for patient limits.
+- [ ] Test that users cannot access another family's data.
 
-# Current Phase 🚧
+## Phase 6 — Medical records and private file storage
 
-## Phase 2 — PostgreSQL & SQL
+- [ ] Implement medical-record metadata endpoints.
+- [ ] Validate that each record's patient and family match.
+- [ ] Configure a private AWS S3 bucket and least-privilege credentials.
+- [ ] Generate server-controlled object keys.
+- [ ] Implement short-lived pre-signed upload URLs.
+- [ ] Verify uploaded objects before persisting record metadata.
+- [ ] Implement authorized pre-signed download URLs.
+- [ ] Validate file size and permitted content types.
+- [ ] Handle failed uploads, orphaned objects, and soft-deleted records.
+- [ ] Add audit events for sensitive record operations.
 
-### SQL Fundamentals
+## Phase 7 — Frontend foundation and API integration
 
-- [ ] What is SQL?
-- [ ] PostgreSQL architecture
-- [ ] SQL data types
-- [ ] Creating databases
-- [ ] Creating tables
-- [ ] Constraints
-- [ ] INSERT
-- [ ] SELECT
-- [ ] UPDATE
-- [ ] DELETE
+- [ ] Initialize React + TypeScript + Vite.
+- [ ] Configure styling and reusable UI components.
+- [ ] Set up routing.
+- [ ] Create registration and login screens.
+- [ ] Implement authenticated application layout.
+- [ ] Build family and patient management screens.
+- [ ] Build medical-record listing and detail screens.
+- [ ] Integrate API calls and server-state handling.
+- [ ] Implement upload and download flows.
+- [ ] Add loading, empty, validation, and error states.
 
----
+## Phase 8 — Subscriptions and product rules
 
-## Phase 3 — Backend Development
+- [ ] Implement the default free family subscription.
+- [ ] Enforce three active patient profiles on the free plan.
+- [ ] Define premium-plan behavior and unlimited patient profiles.
+- [ ] Decide on a payment provider before implementing billing.
+- [ ] Add payment-provider integration only after core workflows are stable.
+- [ ] Test subscription changes and limit enforcement.
 
-- [ ] Express project setup
-- [ ] REST API design
-- [ ] Database connection
-- [ ] Authentication
-- [ ] Authorization
-- [ ] User APIs
-- [ ] Patient APIs
-- [ ] Medical Record APIs
-- [ ] Doctor APIs
-- [ ] Hospital APIs
+## Phase 9 — Security, testing, and hardening
 
----
+- [ ] Test family and patient authorization at API level.
+- [ ] Test cross-family access attempts.
+- [ ] Test file-upload and download authorization.
+- [ ] Test input validation and error handling.
+- [ ] Review secret handling and logging.
+- [ ] Add database backup and restoration procedures.
+- [ ] Review soft-delete and retention behavior.
+- [ ] Add frontend and end-to-end tests.
+- [ ] Add CI checks with GitHub Actions.
 
-## Phase 4 — File Storage
+## Phase 10 — Deployment and production readiness
 
-- [ ] AWS S3 setup
-- [ ] Upload medical reports
-- [ ] Upload profile pictures
-- [ ] Secure file access
+- [ ] Containerize the services where appropriate.
+- [ ] Choose hosting for frontend and backend.
+- [ ] Provision production PostgreSQL.
+- [ ] Configure private S3 storage and IAM permissions.
+- [ ] Configure production secrets and environment variables.
+- [ ] Configure HTTPS, domains, and CORS.
+- [ ] Run database migrations safely.
+- [ ] Verify backups, monitoring, and error reporting.
+- [ ] Complete production smoke and security checks.
 
----
+## Later — Future enhancements
 
-## Phase 5 — Frontend Development
+- [ ] OCR-based medical-document extraction.
+- [ ] Search across medical records.
+- [ ] Medical-history summaries.
+- [ ] Medication and appointment reminders.
+- [ ] Expanded family-sharing permissions.
+- [ ] Doctor or hospital portals.
+- [ ] Mobile application.
+- [ ] Redis and Celery if background jobs or caching become necessary.
 
-- [ ] React project setup
-- [ ] Routing
-- [ ] Authentication pages
-- [ ] Dashboard
-- [ ] Patient management
-- [ ] Medical records
-- [ ] File uploads
-- [ ] Profile management
-
----
-
-## Phase 6 — Security & Validation
-
-- [ ] JWT Authentication
-- [ ] Password hashing
-- [ ] Protected routes
-- [ ] Zod validation
-- [ ] Input sanitization
-- [ ] Error handling
-
----
-
-## Phase 7 — Testing
-
-- [ ] Backend testing
-- [ ] API testing
-- [ ] UI testing
-- [ ] Bug fixing
-
----
-
-## Phase 8 — Deployment
-
-- [ ] Deploy frontend
-- [ ] Deploy backend
-- [ ] Configure PostgreSQL
-- [ ] Configure AWS S3
-- [ ] Environment variables
-- [ ] Production testing
-
----
-
-## Phase 9 — Future Enhancements
-
-- [ ] AI-powered prescription OCR
-- [ ] Medication reminders
-- [ ] Appointment scheduling
-- [ ] Doctor portal
-- [ ] Hospital portal
-- [ ] Shared patient access
-- [ ] Audit logs
-- [ ] Role-based access control
-- [ ] Mobile application
-
----
-
-# Guiding Principles
-
-This project follows these principles throughout development:
-
-- Learn before implementing.
-- Design before coding.
-- Write clean, maintainable code.
-- Understand every architectural decision.
-- Follow professional Git workflows.
-- Document major decisions.
-- Build incrementally with production practices in mind.
+These are future possibilities, not part of the initial implementation scope.
 
 ---
 
-# Project Goal
+## Guiding principles
 
-The goal of MediVault is not only to build a functional application but also to develop a deep understanding of full-stack software engineering by applying real-world development practices from planning to deployment.
+- Learn the concepts before implementing them.
+- Design before coding, but avoid designing speculative features too early.
+- Keep the backend authoritative for authorization and validation.
+- Use migrations for database changes.
+- Write tests as features are introduced.
+- Make small, understandable Git commits.
+- Do not commit credentials, private medical information, or production data.
+- Update this roadmap when actual progress changes.
+
+## Project goal
+
+Build a secure, maintainable family medical-record platform while developing a practical understanding of full-stack engineering, databases, APIs, authentication, cloud storage, testing, and deployment.

@@ -2,196 +2,199 @@
 
 ### Your family's complete medical history. One tap away.
 
-MediVault is a secure family medical-record management platform designed to help individuals and families store, organize, manage, and access their medical records from one centralized location.
-From prescriptions and diagnostic reports to medical histories, MediVault aims to make healthcare information accessible, organized, and secure.
+MediVault is a secure family medical-record management platform designed to help individuals and families store, organize, manage, and access medical information from one centralized application.
 
-> **Project Status:** Under Development — MediVault 2.0 (Architecture Rebuild)
+> **Project status:** Under development — MediVault 2.0 (architecture rebuild)
 
 ---
 
-## Project Overview
+## Project overview
 
-Managing medical records across multiple family members can become difficult. Documents get misplaced, medical histories become fragmented, and accessing older reports can be inconvenient.
-MediVault aims to solve this problem by providing a centralized platform where families can securely manage their medical information.
+Medical documents are often scattered across emails, messaging apps, folders, and physical files. MediVault aims to make it easier for families to maintain organized medical histories for every family member in one secure place.
 
-### Core Objectives
+### Core objectives
 
 - Centralized medical-record management.
 - Individual patient profiles for family members.
 - Secure document uploads and storage.
-- Organized medical history.
-- Family-based access and permissions.
-- Scalable architecture for future enhancements.
+- Organized medical histories.
+- Family-based access control and permissions.
+- A maintainable architecture that can grow over time.
+
+## Planned features
+
+- **Authentication:** Registration, login, account management, and secure sessions.
+- **Family management:** Create family workspaces and manage memberships.
+- **Patient profiles:** Maintain profiles for family members, including people who do not have MediVault accounts.
+- **Medical records:** Upload, organize, view, and manage medical documents.
+- **Private document storage:** Store reports, prescriptions, and other permitted files securely.
+- **Authorization:** Restrict access to family and patient information based on membership and permissions.
+- **Subscriptions:** Free and premium plans with different patient limits.
+- **Audit logs:** Record important security-sensitive actions.
+
+These are planned capabilities; they should not be interpreted as features that are already implemented.
 
 ---
 
-## Planned Features
+## Technology stack
 
-- **User Authentication:** Secure registration, login, and account management.
-- **Family Management:** Create and manage family accounts.
-- **Patient Profiles:** Maintain individual medical profiles for family members.
-- **Medical Records:** Upload, organize, view, and manage medical documents.
-- **Document Storage:** Secure cloud-based storage for prescriptions, reports, and other files.
-- **Access Control:** Ensure users can only access records they are authorized to view.
-- **Subscription Management:** Free and premium plans with different patient limits.
-- **Audit Logs:** Track important actions performed within the platform.
+MediVault uses separate frontend and backend technologies, choosing tools suited to each responsibility.
 
----
-
-## Technology Stack
-
-MediVault follows a modern full-stack architecture, using different technologies where they provide the most value.
 | Layer | Technology |
 |---|---|
 | Frontend | React + TypeScript |
-| Build Tool | Vite |
+| Build tool | Vite |
 | Styling | Tailwind CSS |
-| UI Components | shadcn/ui |
+| UI components | shadcn/ui |
 | Routing | React Router |
-| API State Management | TanStack Query |
-| Form Validation | React Hook Form + Zod |
-| Backend | Python + FastAPI |
-| Backend Validation | Pydantic |
-| ORM | SQLAlchemy |
+| API state management | TanStack Query |
+| Forms | React Hook Form |
+| Frontend validation | Zod |
+| Backend language | Python |
+| Backend framework | FastAPI |
+| Backend validation | Pydantic |
+| ORM | SQLAlchemy 2 |
 | Database | PostgreSQL |
-| Database Migrations | Alembic |
-| Authentication | JWT + secure refresh-token flow |
-| Password Hashing | Argon2 |
-| File Storage | AWS S3 |
-| Caching | Redis (planned) |
-| Background Processing | Celery (planned) |
+| Database migrations | Alembic |
+| JWT handling | PyJWT |
+| Password hashing | pwdlib with Argon2 |
+| File storage | Private AWS S3 bucket |
+| Caching / task queue | Redis (later, when needed) |
+| Background processing | Celery (later, when needed) |
 | Containerization | Docker |
-| Testing | Pytest + frontend testing tools |
-| Version Control | Git + GitHub |
+| Backend testing | Pytest |
+| Version control | Git + GitHub |
 
 ---
 
-## Architecture
+## System architecture
 
-MediVault uses a frontend-backend separation architecture.
-MEDIVAULT
-|
-React + TypeScript
-|
-HTTP / API
-|
-Python + FastAPI
-|
------------------------
-| | |
-PostgreSQL AWS S3 Redis
-| | (Planned)
-User Data Documents
-Family Reports
-Patients Prescriptions
-Records
+The application follows a client-server architecture with a modular monolith backend.
 
-### Frontend
+```text
+                 USER
+                   |
+                   v
+          React + TypeScript
+                   |
+              HTTPS / REST
+                   |
+                   v
+            Python + FastAPI
+             /      |       \
+            v       v        v
+       PostgreSQL  AWS S3   Redis
+                    private  (later)
+                    storage
+```
 
-Responsible for the user interface, dashboards, patient profiles, forms, and document management.
+- **Frontend:** Handles pages, forms, navigation, and user interactions.
+- **Backend:** Handles authentication, authorization, validation, business logic, and integrations.
+- **PostgreSQL:** Stores structured application data such as users, families, patients, and medical-record metadata.
+- **AWS S3:** Stores medical documents separately from the relational database. The bucket will remain private.
 
-### Backend
+The backend is the security boundary. Frontend checks improve usability but never replace backend authorization.
 
-FastAPI handles application logic, authentication, authorization, data validation, and communication with external services.
+For more detail, see [System Architecture](docs/architecture.md) and [Database Design](docs/database-design.md).
 
-### Database
+---
 
-PostgreSQL stores structured application data, including users, families, patients, medical records, and subscriptions.
+## Repository structure
 
-### Cloud Storage
-
-## AWS S3 stores medical documents separately from the relational database.
-
-## Project Structure
-
+```text
 MediVault/
-│
 ├── docs/
-│ ├── architecture.md
-│ ├── database-design.md
-│ ├── er-diagram.png
-│ └── roadmap.md
-│
-├── medivault-frontend/
-│
+│   ├── architecture.md
+│   ├── database-design.md
+│   ├── er-diagram.png
+│   └── roadmap.md
 ├── medivault-backend/
-│
+├── medivault-frontend/
 ├── .gitignore
 ├── LICENSE
-├── README.md
-└── MediVault.code-workspace
-The frontend and backend will be developed and maintained independently within the same repository.
+├── MediVault.code-workspace
+└── README.md
+```
+
+The frontend and backend directories are separate applications within the same repository. Their internal structures will be created during their respective setup phases.
 
 ---
 
-## Security Considerations
+## Security principles
 
-Because MediVault handles sensitive medical information, security is a core architectural requirement.
-Planned security measures include:
+MediVault is intended to handle sensitive personal and medical information. Security must be considered from the beginning of implementation.
 
-- Secure password hashing.
-- Short-lived access tokens and protected refresh tokens.
-- Family-level authorization and data isolation.
-- Private cloud storage.
-- Time-limited document access links.
-- Input and file validation.
-- Audit logging.
-- Secure HTTPS communication.
-- Database backups and recovery procedures.
+Planned controls include:
 
----
+- Argon2 password hashing; never store plaintext passwords.
+- Short-lived access tokens and protected refresh-token handling.
+- Backend-enforced family and patient authorization.
+- Private S3 buckets and short-lived pre-signed URLs.
+- File type, size, and upload validation.
+- Restricted database credentials and parameterized database access.
+- Audit logging without storing passwords, tokens, or unnecessary medical details.
+- HTTPS, secure secret management, backups, and recovery procedures.
 
-## Development Roadmap
-
-| Phase | Description                                | Status      |
-| ----- | ------------------------------------------ | ----------- |
-| 1     | Architecture and technology selection      | Completed   |
-| 2     | Repository restructuring and documentation | In Progress |
-| 3     | Backend foundation and database setup      | Planned     |
-| 4     | Authentication and authorization           | Planned     |
-| 5     | Family and patient management              | Planned     |
-| 6     | Medical-record management                  | Planned     |
-| 7     | Cloud storage integration                  | Planned     |
-| 8     | Security and testing                       | Planned     |
-| 9     | Subscription management                    | Planned     |
-| 10    | Deployment and production readiness        | Planned     |
+A UUID is an identifier, not an authorization mechanism. Every protected request must verify the user's permissions.
 
 ---
 
-## Future Possibilities
+## Development roadmap
 
-Potential future enhancements include:
+| Phase | Description | Status |
+|---|---|---|
+| 0 | Repository and development environment setup | In progress |
+| 1 | Architecture and database design documentation | Completed |
+| 2 | SQL and PostgreSQL fundamentals | Next |
+| 3 | Python and FastAPI backend foundation | Planned |
+| 4 | Authentication and authorization | Planned |
+| 5 | Family and patient management | Planned |
+| 6 | Medical-record management and S3 integration | Planned |
+| 7 | Frontend implementation and API integration | Planned |
+| 8 | Security, testing, and hardening | Planned |
+| 9 | Deployment and production readiness | Planned |
+| 10 | Future enhancements | Later |
 
-- Medical document categorization.
+The detailed task checklist lives in [docs/roadmap.md](docs/roadmap.md).
+
+---
+
+## Future possibilities
+
+Potential enhancements after the core platform is working include:
+
 - OCR-based document text extraction.
 - Search across medical records.
-- Automated medical-record summaries.
-- Family health timelines.
+- Medical-history summaries.
 - Appointment and medication reminders.
-  These are future possibilities, not currently implemented features.
+- Additional family-sharing permissions.
+- Doctor or hospital portals.
+- A mobile application.
+
+These are future possibilities, not part of the initial implementation scope.
 
 ---
 
-## Development
+## Development approach
 
-MediVault is being rebuilt using a modern full-stack architecture.
-The development process emphasizes:
+The project will be developed incrementally:
 
-- Modular and maintainable code.
-- Clear separation of frontend and backend responsibilities.
-- Secure data handling.
-- Database consistency.
-- Automated testing.
-- Version control and documentation.
+1. Understand the concepts before implementing them.
+2. Finalize the design before writing application code.
+3. Keep frontend and backend responsibilities separate.
+4. Enforce security and data integrity in the backend and database.
+5. Write tests as features are introduced.
+6. Use Git commits to keep changes small and understandable.
+7. Keep documentation aligned with the implementation.
 
 ---
 
-## Project Information
+## Project information
 
-**Project:** MediVault  
-**Version:** 2.0 (Architecture Rebuild)  
-**Category:** Full-Stack Web Application  
-**Repository:** [GitHub - MediVault](https://github.com/DivyanshBhat/MediVault)
+- **Project:** MediVault
+- **Version:** 2.0 (architecture rebuild)
+- **Category:** Full-stack web application
+- **Repository:** [GitHub — MediVault](https://github.com/DivyanshBhat/MediVault)
 
 ---
 

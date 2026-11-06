@@ -365,7 +365,7 @@ For example, when retrieving a medical record:
 
 The following tables and features can be introduced when the application requires them:
 
-- Refresh Tokens / Sessions.
+- Refresh-token/session persistence is described in Section 13 and is part of the authentication implementation phase.
 - Notifications.
 - Payment Transactions.
 - Medical Record Categories.
@@ -454,6 +454,8 @@ Store only a hash of the refresh-token secret, never the raw token. The backend 
 This table is an implementation prerequisite for refresh-token rotation, even though it is introduced in the authentication phase rather than required for the first database-learning exercises. Its final name and columns can be refined before the authentication migration is created.
 
 ## 14. Constraint implementation notes
+
+The editable [DBML schema](database.dbml) records the tables, relationships, indexes, and the principal CHECK constraints used by the ER diagram. Keep it synchronized with this document whenever the schema changes.
 
 - Add database CHECK constraints for finite role, invitation-status, subscription-plan, subscription-status, and medical-record-type values, or use PostgreSQL enum types after considering migration implications.
 - Add a unique constraint on `family_invitations.token_hash`.

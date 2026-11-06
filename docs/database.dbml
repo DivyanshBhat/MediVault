@@ -1,0 +1,162 @@
+Project MediVault {
+  database_type: 'PostgreSQL'
+  Note: 'Family medical-record platform. UUID primary keys; timestamps are stored in UTC.'
+}
+
+Table users {
+  id uuid [pk]
+  full_name varchar(100) [not null]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null, note: 'Argon2 password hash; never plaintext']
+  is_active boolean [not null, default: true]
+  email_verified_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+}
+
+Table families {
+  id uuid [pk]
+  name varchar(100) [not null]
+  created_by uuid [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+}
+
+Table family_memberships {
+  id uuid [pk]
+  family_id uuid [not null]
+  user_id uuid [not null]
+  role varchar(20) [not null, note: 'OWNER, ADMIN, MEMBER']
+  joined_at timestamptz [not null]
+  created_at timestamptz [not null]
+
+  indexes {
+    (family_id, user_id) [unique]
+    (user_id)
+  }
+}
+
+Table family_invitations {
+  id uuid [pk]
+  family_id uuid [not null]
+  invited_by uuid [not null]
+  email varchar(255) [not null]
+  role varchar(20) [not null, note: 'ADMIN or MEMBER; validate allowed invite roles']
+  token_hash varchar(255) [not null, unique]
+  status varchar(20) [not null, note: 'PENDING, ACCEPTED, EXPIRED, REVOKED']
+  expires_at timestamptz [not null]
+  accepted_at timestamptz
+  created_at timestamptz [not null]
+
+  indexes {
+    (family_id, status)
+  }
+}
+
+Table patients {
+  id uuid [pk]
+  family_id uuid [not null]
+  full_name varchar(100) [not null]
+  date_of_birth date
+  gender varchar(30)
+  blood_group varchar(5)
+  relationship varchar(50)
+  notes varchar(1000)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  indexes {
+    (family_id, id) [unique, name: 'uq_patients_family_id_id']
+    (family_id)
+  }
+}
+
+Table medical_records {
+  id uuid [pk]
+  patient_id uuid [not null]
+  family_id uuid [not null]
+  uploaded_by uuid [not null]
+  title varchar(200) [not null]
+  description varchar(1000)
+  record_type varchar(50) [not null, note: 'PRESCRIPTION, LAB_REPORT, SCAN, DISCHARGE_SUMMARY, VACCINATION, OTHER']
+  document_date date
+  storage_key varchar(500) [not null, note: 'Private S3 object key; not a public URL']
+  original_filename varchar(255) [not null]
+  mime_type varchar(100) [not null]
+  file_size_bytes bigint [not null, note: 'CHECK file_size_bytes > 0']
+  checksum_sha256 varchar(64)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz
+
+  indexes {
+    (patient_id)
+    (family_id)
+    (uploaded_by)
+  }
+}
+
+Table subscriptions {
+  id uuid [pk]
+  family_id uuid [not null, unique]
+  plan varchar(20) [not null, note: 'FREE or PREMIUM']
+  status varchar(20) [not null, note: 'ACTIVE, TRIALING, PAST_DUE, CANCELLED, EXPIRED']
+  provider varchar(30)
+  provider_customer_id varchar(255)
+  provider_subscription_id varchar(255)
+  current_period_start timestamptz
+  current_period_end timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table audit_logs {
+  id uuid [pk]
+  family_id uuid [not null]
+  actor_user_id uuid
+  action varchar(100) [not null]
+  entity_type varchar(50) [not null]
+  entity_id uuid
+  metadata jsonb [note: 'Do not store passwords, tokens, or unnecessary medical details']
+  created_at timestamptz [not null]
+
+  indexes {
+    (family_id, created_at)
+    (actor_user_id)
+  }
+}
+
+Table refresh_tokens {
+  id uuid [pk]
+  user_id uuid [not null]
+  token_hash varchar(255) [not null, unique, note: 'Hash only; never store the raw refresh token']
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null]
+  revoked_at timestamptz
+  replaced_by_token_id uuid [note: 'Self-reference to the replacement token']
+  
+  indexes {
+    (user_id)
+    (expires_at)
+  }
+}
+
+Ref: families.created_by > users.id
+Ref: family_memberships.family_id > families.id
+Ref: family_memberships.user_id > users.id
+Ref: family_invitations.family_id > families.id
+Ref: family_invitations.invited_by > users.id
+Ref: patients.family_id > families.id
+
+// Composite FK: a record's patient must belong to the same family as the record.
+Ref: medical_records.(family_id, patient_id) > patients.(family_id, id)
+Ref: medical_records.uploaded_by > users.id
+
+Ref: subscriptions.family_id - families.id
+Ref: audit_logs.family_id > families.id
+Ref: audit_logs.actor_user_id > users.id
+Ref: refresh_tokens.user_id > users.id
+Ref: refresh_tokens.replaced_by_token_id > refresh_tokens.id

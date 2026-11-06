@@ -1,246 +1,404 @@
-# MediVault Database Design
-
-## Overview
-
-MediVault is a secure family medical records management platform designed to help users organize, manage, and access their family's medical history from a single application.
-
-The database is designed using relational database principles to ensure data integrity, scalability, and maintainability. Before writing any SQL, the complete database schema was planned to establish clear relationships between entities and avoid data duplication.
-
-
-# Why PostgreSQL?
-
-MediVault uses **PostgreSQL** as its primary database because healthcare data is highly structured and contains many relationships between entities.
-
-Reasons for choosing PostgreSQL:
-
-* Supports relational data through tables and foreign keys.
-* Ensures data consistency using ACID transactions.
-* Excellent support for constraints and data validation.
-* Highly scalable and widely used in production applications.
-* Strong community support and extensive documentation.
-
-
-# Database Design Philosophy
-
-The database was designed following these principles:
-
-* One table represents one real-world entity.
-* Every table has a primary key.
-* Relationships are created using foreign keys.
-* Duplicate data should be avoided whenever possible.
-* Store references (IDs) instead of repeating information.
-* Design the schema before writing SQL.
-* Keep the schema simple while allowing future expansion.
-
-
-
-# Database Entities
-
-## Users
-
-Stores account information for every registered user.
-
-### Main Attributes
-
-* id
-* name
-* email
-* password_hash
-* phone_number
-* profile_picture_url
-* subscription_plan
-* created_at
-* updated_at
-
-### Notes
-
-* Email must be unique.
-* Passwords are never stored in plain text.
-* Profile pictures will be stored in AWS S3, while the database stores only the file reference.
-* Every new account starts with the **FREE** subscription plan by default.
-
-
-
-## Patients
-
-Stores family members managed by a user.
-
-### Main Attributes
-
-* id
-* user_id
-* name
-* relationship
-* date_of_birth
-* gender
-* blood_group
-* height
-* weight
-* allergies
-* created_at
-* updated_at
-
-### Notes
-
-* One user can manage multiple patients.
-* Age is not stored because it changes over time. Date of birth is stored instead.
-
-
-
-## MedicalRecords
-
-Stores metadata for uploaded medical documents.
-
-### Main Attributes
-
-* id
-* patient_id
-* doctor_id
-* hospital_id
-* title
-* report_type
-* record_date
-* file_name
-* file_size
-* mime_type
-* s3_key
-* uploaded_at
-* created_at
-* updated_at
-
-### Notes
-
-* Medical files are stored in AWS S3.
-* PostgreSQL stores only the metadata required to locate and manage those files.
-
-
-
-## Doctors
-
-Stores doctor information referenced by medical records.
-
-### Main Attributes
-
-* id
-* hospital_id
-* name
-* specialization
-* qualification
-* phone_number
-* created_at
-* updated_at
-
-
-
-## Hospitals
-
-Stores hospital information.
-
-### Main Attributes
-
-* id
-* name
-* address
-* city
-* state
-* country
-* phone_number
-* created_at
-* updated_at
-
-
-
-# Relationships
-
-### Users → Patients
-
-One user can have multiple patients.
-
-Relationship:
-
-**One-to-Many**
-
-
-
-### Patients → MedicalRecords
-
-One patient can have multiple medical records.
-
-Relationship:
-
-**One-to-Many**
-
-
-
-### Hospitals → Doctors
-
-One hospital can have multiple doctors.
-
-Relationship:
-
-**One-to-Many**
-
-
-
-### Doctors → MedicalRecords
-
-A doctor can be associated with multiple medical records.
-
-Relationship:
-
-**One-to-Many**
-
-
-
-### Hospitals → MedicalRecords
-
-A hospital can be associated with multiple medical records.
-
-Relationship:
-
-**One-to-Many**
-
-
-
-# Business Rules
-
-* Every user starts with the **FREE** plan.
-* FREE accounts can manage up to **3 patients**.
-* PREMIUM accounts can manage unlimited patients.
-* Profile pictures are stored in AWS S3.
-* Medical reports are stored in AWS S3.
-* PostgreSQL stores only file metadata.
-* Passwords are stored as secure hashes, never in plain text.
-
-
-
-# Database Design Decisions
-
-Several design decisions were made before implementation:
-
-* Integer primary keys are used for Version 1 to simplify development and learning.
-* Foreign keys maintain relationships between tables.
-* Data duplication is minimized through normalization.
-* Soft deletes are planned to improve user data safety and recovery.
-* Constraints such as PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, CHECK, and DEFAULT will be applied during SQL implementation.
-
-
-
-# Future Improvements
-
-Potential improvements for future versions include:
-
-* UUID-based primary keys.
-* Shared patients between multiple user accounts.
-* Doctor and hospital login portals.
-* AI-assisted prescription OCR.
-* Appointment management.
-* Medication reminders.
-* Audit logs.
-* Role-based access control.
-
-
-
-# Conclusion
-
-The MediVault database has been designed using relational database principles before implementation. This approach ensures that the system remains scalable, maintainable, and suitable for future feature expansion while keeping the Version 1 architecture simple and easy to understand.
+# MediVault — Database Design
+
+## 1. Overview
+
+MediVault uses PostgreSQL as its primary relational database.
+The database is designed around a family-based multi-tenant architecture. A user can create multiple families or belong to multiple families through invitations. Each family has its own patient profiles, medical records, subscription, and activity history.
+The database uses UUID primary keys, foreign-key relationships, appropriate indexes, and timestamps.
+
+### Design principles
+
+- Family-based data isolation.
+- Support multiple families per user.
+- Role-based family membership.
+- UUID primary keys.
+- Referential integrity through foreign keys.
+- Soft deletion for recoverable user data.
+- Immutable audit history.
+- Private medical file storage through AWS S3.
+- Subscription management at the family level.
+
+---
+
+## 2. Entity Relationship Overview
+
+The initial database contains the following entities:
+
+1. Users
+2. Families
+3. Family Memberships
+4. Family Invitations
+5. Patients
+6. Medical Records
+7. Subscriptions
+8. Audit Logs
+
+### Relationships
+
+- A user can belong to multiple families.
+- A family can have multiple users.
+- A family can contain multiple patient profiles.
+- A patient can have multiple medical records.
+- A family has one subscription.
+- A family can have multiple audit log entries.
+- A family can have multiple pending invitations.
+  The many-to-many relationship between users and families is handled through the `family_memberships` table.
+
+---
+
+## 3. Table Definitions
+
+### 3.1 Users
+
+Stores registered MediVault accounts.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| full_name | VARCHAR(100) | NOT NULL |
+| email | VARCHAR(255) | UNIQUE, NOT NULL |
+| password_hash | VARCHAR(255) | NOT NULL |
+| is_active | BOOLEAN | DEFAULT TRUE |
+| email_verified_at | TIMESTAMPTZ | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| updated_at | TIMESTAMPTZ | NOT NULL |
+| deleted_at | TIMESTAMPTZ | NULL |
+**Purpose:**
+
+- Stores account information.
+- Supports authentication.
+- Allows account deactivation.
+- Connects users to families through memberships.
+  Passwords must always be stored as secure password hashes, never as plain text.
+
+### 3.2 Families
+
+Represents a family workspace.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| name | VARCHAR(100) | NOT NULL |
+| created_by | UUID | FK → users.id |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| updated_at | TIMESTAMPTZ | NOT NULL |
+| deleted_at | TIMESTAMPTZ | NULL |
+**Purpose:**
+
+- Represents an independent family workspace.
+- Owns patient profiles and medical records.
+- Has its own subscription.
+- Provides the boundary for family-level data access.
+
+### 3.3 Family Memberships
+
+Connects users with families.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| family_id | UUID | FK → families.id |
+| user_id | UUID | FK → users.id |
+| role | VARCHAR(20) | NOT NULL |
+| joined_at | TIMESTAMPTZ | NOT NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+**Allowed roles:**
+
+- `OWNER`
+- `ADMIN`
+- `MEMBER`
+  **Constraints:**
+- A user can have only one membership in a particular family.
+- A user can belong to multiple different families.
+- Each family must have an owner.
+- Only authorized roles can invite or remove members and manage family settings.
+  The combination of `family_id` and `user_id` must be unique.
+
+### 3.4 Family Invitations
+
+Stores invitations sent to people who are not yet members of a family.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| family_id | UUID | FK → families.id |
+| invited_by | UUID | FK → users.id |
+| email | VARCHAR(255) | NOT NULL |
+| role | VARCHAR(20) | NOT NULL |
+| token_hash | VARCHAR(255) | NOT NULL |
+| status | VARCHAR(20) | NOT NULL |
+| expires_at | TIMESTAMPTZ | NOT NULL |
+| accepted_at | TIMESTAMPTZ | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+**Purpose:**
+
+- Allows family owners and authorized administrators to invite users.
+- Supports invitation acceptance and expiration.
+- Prevents storing raw invitation tokens.
+  **Possible statuses:**
+- `PENDING`
+- `ACCEPTED`
+- `EXPIRED`
+- `REVOKED`
+
+### 3.5 Patients
+
+Stores patient profiles belonging to a family.
+A patient profile does not require the patient to have a MediVault login account.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| family_id | UUID | FK → families.id |
+| full_name | VARCHAR(100) | NOT NULL |
+| date_of_birth | DATE | NULL |
+| gender | VARCHAR(30) | NULL |
+| blood_group | VARCHAR(5) | NULL |
+| relationship | VARCHAR(50) | NULL |
+| notes | VARCHAR(1000) | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| updated_at | TIMESTAMPTZ | NOT NULL |
+| deleted_at | TIMESTAMPTZ | NULL |
+**Purpose:**
+
+- Stores family members' patient profiles.
+- Connects medical records to individual patients.
+- Allows a family to manage multiple patient profiles.
+  **Subscription rule:**
+- Free plan: Maximum 3 active patient profiles per family.
+- Premium plan: Unlimited active patient profiles.
+  The patient limit will be checked by the backend within a database transaction to prevent concurrent requests from exceeding the limit.
+
+### 3.6 Medical Records
+
+Stores medical document metadata and references to files in AWS S3.
+The actual documents are never stored directly in PostgreSQL.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| patient_id | UUID | FK → patients.id |
+| family_id | UUID | FK → families.id |
+| uploaded_by | UUID | FK → users.id |
+| title | VARCHAR(200) | NOT NULL |
+| description | VARCHAR(1000) | NULL |
+| record_type | VARCHAR(50) | NOT NULL |
+| document_date | DATE | NULL |
+| storage_key | VARCHAR(500) | NOT NULL |
+| original_filename | VARCHAR(255) | NOT NULL |
+| mime_type | VARCHAR(100) | NOT NULL |
+| file_size_bytes | BIGINT | NOT NULL |
+| checksum_sha256 | VARCHAR(64) | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| updated_at | TIMESTAMPTZ | NOT NULL |
+| deleted_at | TIMESTAMPTZ | NULL |
+**Possible record types:**
+
+- `PRESCRIPTION`
+- `LAB_REPORT`
+- `SCAN`
+- `DISCHARGE_SUMMARY`
+- `VACCINATION`
+- `OTHER`
+  **Purpose:**
+- Stores information about medical documents.
+- Connects each document to a patient and family.
+- Tracks who uploaded each document.
+- References the private S3 object using `storage_key`.
+  **Important security rule:**
+  The backend must verify that the requesting user belongs to the family associated with the patient and record before allowing access.
+  S3 objects must remain private. Access should be provided through short-lived pre-signed URLs after backend authorization.
+
+### 3.7 Subscriptions
+
+Stores family-level subscription information.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| family_id | UUID | FK → families.id, UNIQUE |
+| plan | VARCHAR(20) | NOT NULL |
+| status | VARCHAR(20) | NOT NULL |
+| provider | VARCHAR(30) | NULL |
+| provider_customer_id | VARCHAR(255) | NULL |
+| provider_subscription_id | VARCHAR(255) | NULL |
+| current_period_start | TIMESTAMPTZ | NULL |
+| current_period_end | TIMESTAMPTZ | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| updated_at | TIMESTAMPTZ | NOT NULL |
+**Possible plans:**
+
+- `FREE`
+- `PREMIUM`
+  **Possible statuses:**
+- `ACTIVE`
+- `TRIALING`
+- `PAST_DUE`
+- `CANCELLED`
+- `EXPIRED`
+  **Purpose:**
+- Manages the subscription for an entire family.
+- Controls the number of patient profiles permitted.
+- Stores payment-provider references when premium billing is introduced.
+  A family should have one current subscription record. The free plan is the default.
+
+### 3.8 Audit Logs
+
+Tracks important actions performed within MediVault.
+| Column | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary Key |
+| family_id | UUID | FK → families.id |
+| actor_user_id | UUID | FK → users.id, NULL |
+| action | VARCHAR(100) | NOT NULL |
+| entity_type | VARCHAR(50) | NOT NULL |
+| entity_id | UUID | NULL |
+| metadata | JSONB | NULL |
+| created_at | TIMESTAMPTZ | NOT NULL |
+**Example actions:**
+
+- `FAMILY_CREATED`
+- `MEMBER_INVITED`
+- `MEMBER_REMOVED`
+- `PATIENT_CREATED`
+- `PATIENT_UPDATED`
+- `RECORD_UPLOADED`
+- `RECORD_DELETED`
+  **Purpose:**
+- Maintains an activity history.
+- Helps investigate unauthorized or unexpected actions.
+- Provides accountability for sensitive medical-record operations.
+  Audit logs should be append-only. Avoid storing passwords, access tokens, medical document contents, or unnecessary sensitive personal information in log metadata.
+
+---
+
+## 4. Database Relationships
+
+| Relationship                  | Type        |
+| ----------------------------- | ----------- |
+| Users → Family Memberships    | One-to-Many |
+| Families → Family Memberships | One-to-Many |
+| Families → Patients           | One-to-Many |
+| Patients → Medical Records    | One-to-Many |
+| Families → Subscriptions      | One-to-One  |
+| Families → Family Invitations | One-to-Many |
+| Families → Audit Logs         | One-to-Many |
+| Users → Medical Records       | One-to-Many |
+| Users → Audit Logs            | One-to-Many |
+
+## Users and families have a many-to-many relationship through `family_memberships`.
+
+## 5. Important Indexes and Constraints
+
+The initial database should include:
+
+- Unique index on `users.email`.
+- Unique constraint on `(family_id, user_id)` in `family_memberships`.
+- Unique constraint on `subscriptions.family_id`.
+- Index on `patients.family_id`.
+- Index on `medical_records.patient_id`.
+- Index on `medical_records.family_id`.
+- Index on `medical_records.uploaded_by`.
+- Index on `family_invitations.family_id` and invitation status.
+- Index on `audit_logs.family_id` and `created_at`.
+  Additional constraints:
+- `file_size_bytes` must be greater than zero.
+- Roles, subscription plans, statuses, and record types must use validated allowed values.
+- Foreign keys must prevent orphaned records.
+- Family and patient relationships must be validated to ensure a medical record cannot connect a patient from one family to another family's records.
+  Use transactions for operations that update related data or enforce subscription limits.
+
+---
+
+## 6. Data Types and Conventions
+
+| Purpose           | PostgreSQL Type |
+| ----------------- | --------------- |
+| Primary keys      | UUID            |
+| Names             | VARCHAR(100)    |
+| Email             | VARCHAR(255)    |
+| Password hashes   | VARCHAR(255)    |
+| Descriptions      | VARCHAR(1000)   |
+| Dates             | DATE            |
+| Timestamps        | TIMESTAMPTZ     |
+| Boolean values    | BOOLEAN         |
+| File sizes        | BIGINT          |
+| Flexible metadata | JSONB           |
+
+### General conventions
+
+- Use `snake_case` for table and column names.
+- Use UUID primary keys.
+- Use `TIMESTAMPTZ` for timestamps.
+- Store timestamps in UTC.
+- Use `VARCHAR` with explicit limits for ordinary string fields.
+- Use JSONB only for genuinely flexible metadata.
+- Use foreign keys wherever relationships exist.
+
+---
+
+## 7. Soft Deletion and Data Retention
+
+Soft deletion will initially be supported for:
+
+- User accounts.
+- Families.
+- Patient profiles.
+- Medical records.
+  Soft-deleted records should not appear in ordinary application queries.
+  Audit logs should not be soft-deleted or silently modified.
+  Permanent deletion and retention policies must be designed carefully, particularly for medical documents and account-related personal information.
+
+---
+
+## 8. Family Data Isolation and Security
+
+Family isolation is one of the most important parts of the MediVault database design.
+Every request involving a family-owned resource must verify the user's membership and permissions.
+For example, when retrieving a medical record:
+
+1. Authenticate the user.
+2. Identify the requested medical record.
+3. Determine the family associated with the record.
+4. Verify the user's membership in that family.
+5. Verify the user's permissions.
+6. Return the authorized record or a private, short-lived file URL.
+   Knowing a UUID must never be sufficient to access a medical record.
+   The backend must also validate that the `family_id` stored on a medical record matches the family that owns its referenced patient.
+
+---
+
+## 9. Future Database Enhancements
+
+The following tables and features can be introduced when the application requires them:
+
+- Refresh Tokens / Sessions.
+- Notifications.
+- Payment Transactions.
+- Medical Record Categories.
+- Record Sharing and Access Permissions.
+- User Activity History.
+- Family Settings.
+- Data Export Requests.
+- Account Deletion Requests.
+  These are intentionally excluded from the initial schema to keep the first version manageable.
+
+---
+
+## 10. Database Technology
+
+**Database:** PostgreSQL
+**ORM:** SQLAlchemy 2
+**Migrations:** Alembic
+**Validation:** Pydantic
+Database schema changes will be managed through Alembic migrations rather than manual production database modifications.
+The initial database name will be `medivault`.
+
+---
+
+## 11. Summary
+
+The MediVault database is designed around family workspaces, with users connected to families through memberships.
+This structure supports:
+
+- Multiple families per user.
+- Multiple users per family.
+- Multiple patient profiles per family.
+- Medical records linked to individual patients.
+- Family-level subscription management.
+- Auditable access and activity.
+- Secure private document storage.
+  The design provides a foundation for MediVault 2.0 while leaving room for future features.

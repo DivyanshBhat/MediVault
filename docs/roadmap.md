@@ -29,7 +29,7 @@ The goal is to build a working full-stack application while learning and applyin
 - [ ] Confirm local Python version and virtual-environment workflow.
 - [ ] Confirm PostgreSQL installation and local connection.
 - [ ] Set up frontend tooling when frontend work begins.
-- [ ] Add environment-variable examples without committing secrets.
+- [x] Add environment-variable examples without committing secrets.
 
 ## Phase 1 — Architecture and database design
 
